@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import CustomerRoutes from './routes/CustomerRoutes.js';
 
 dotenv.config();
 const app = express();
@@ -10,6 +11,7 @@ app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors());
+app.use('/', CustomerRoutes);
 
 mongoose
 .connect(process.env.MONGODB_URL, { 
@@ -19,4 +21,7 @@ mongoose
                 
 const PORT = process.env.PORT || 1670;
 
-app.listen(process.env.PORT, () => console.log(`Server running on port :${PORT} 🚀🚀🚀`));
+app.listen(PORT, () => {
+    console.log(`Server is up and runnig on : ${PORT} 🚀🚀🚀`);
+  });
+  
