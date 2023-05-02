@@ -3,6 +3,7 @@ import Token from '../model/Token.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
+
 const register = async (req, res) => {
     try {
         const existingCustomer = await Customer.findOne({ email: req.body.email });
@@ -93,6 +94,30 @@ const login = async (req, res) => {
       });
     }
   };
+
+  const logout = async (req, res) => {
+    try {
+      // Delete the token document associated with the customer
+      await Token.findOneAndDelete({
+        _customerId: req.customerId,
+        tokenType: 'login',
+      }).exec();
+  
+      return res.status(200).json({
+        status: true,
+        message: 'Logout successful',
+        data: undefined,
+      });
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({
+        status: false,
+        message: 'Server Error',
+        data: undefined,
+      });
+    }
+  };
+  
   
 
-export { register, login };
+export { register, login , logout };
