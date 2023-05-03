@@ -2,6 +2,9 @@ import Customer from '../model/CustomerModel.js';
 import Token from '../model/Token.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { auth } from '../middleware/auth.js';
+import { sendEmail } from '../utils/sendEmail.js';
+import {  resetPassword } from '../utils/emailTemplate.js';
 
 
 const register = async (req, res) => {
@@ -97,7 +100,7 @@ const login = async (req, res) => {
 
   const logout = async (req, res) => {
     try {
-      // Delete the token document associated with the customer
+     
       await Token.findOneAndDelete({
         _customerId: req.customerId,
         tokenType: 'login',
@@ -118,6 +121,55 @@ const login = async (req, res) => {
     }
   };
   
+  const authUser = async (req, res) => {
+    const customerId = req.customerId;
+    try {
+        const customer = await Customer.findById(customerId);
+        if (!customer) {
+            return res.status(401).json({
+                status: false,
+                message: 'User not found',
+                data: undefined,
+            });
+        }
+        return res.status(200).json({
+            status: true,
+            message: 'User found',
+            data: customer,
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({
+            status: false,
+            message: 'Error retrieving user',
+            data: undefined,
+        });
+    }
+};
+
+const forgetPassword = async (req, res) => {
+    try {
+        const email = req.body.email;
+        const emailTemplate = resetPassword(email , "redfvejrnvjehrnvhj");
+        sendEmail(emailTemplate);
+        res.status(200).json({
+            status: true,
+            message: "Email sent successfully",
+            data: undefined
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({
+            status: false,
+            message: "Error sending email",
+            data: undefined
+        });
+    }
+};
+
+
+
+
   
 
-export { register, login , logout };
+export { register, login , logout , authUser, forgetPassword };
