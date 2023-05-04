@@ -10,6 +10,8 @@ let transporter = nodemailer.createTransport({
     }
 });
 
+
+
 const sendEmail = (emailTemplate) => {
     transporter.sendMail(emailTemplate, (err, info) => {
         if(err) {
@@ -18,5 +20,5 @@ const sendEmail = (emailTemplate) => {
         console.log('Email sent: ' , info.response);
     });
 }
-
 export {sendEmail};
+

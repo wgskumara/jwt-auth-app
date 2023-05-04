@@ -150,26 +150,110 @@ const login = async (req, res) => {
 const forgetPassword = async (req, res) => {
     try {
         const email = req.body.email;
-        const emailTemplate = resetPassword(email , "redfvejrnvjehrnvhj");
-        sendEmail(emailTemplate);
-        res.status(200).json({
-            status: true,
-            message: "Email sent successfully",
-            data: undefined
-        });
+        const customer = await Customer.findOne({ email });
+
+        if (!customer) {
+            return res.status(401).json({
+                status: false,
+                message: 'User not found',
+                data: undefined,
+            });
+        }
+
+        const token = jwt.sign(
+            {
+                email: customer.email,
+                customerId: customer._id,
+            },
+            process.env.JWT_RESET_PW_KEY,
+            {
+                expiresIn: '20m',
+
+            }
+        );
+
+        const tokenDoc = await Token.findOneAndUpdate(
+            { _customerId: customer._id, tokenType: 'resetPassword' },
+            { token: token },
+            { new: true, upsert: true }
+        );
+        
+        if (tokenDoc) {
+            const emailTemplate = resetPassword(email, token);
+            sendEmail(emailTemplate);
+            res.status(200).json({
+                status: true,
+                message: "Email sent successfully",
+                data: undefined
+            });
+        } else {
+            return res.status(401).json({
+                status: false,
+                message: 'Error saving token',
+                data: undefined,
+            });
+        }
     } catch (err) {
         console.error(err);
-        res.status(500).json({
+        return res.status(500).json({
             status: false,
-            message: "Error sending email",
-            data: undefined
+            message: 'Error sending email',
+            data: undefined,
         });
     }
 };
 
+const resetPasswordcon = async (req, res) => {
+  const token = req.params.token;
+  const password = req.body.password;
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_RESET_PW_KEY);
+    const customer = await Token.findOne({ _customerId: decoded.customerId,token: token,tokenType: 'resetPassword',
+    });
+    console.log('customer:', customer);
+
+    if (!customer) {
+      return res.status(404).json({
+        status: true,
+        message: 'Customer not found or invalid token',
+        data: undefined,
+      });
+    }
+
+    bcrypt.hash(password, 10, async (err, hash) => {
+      if (err) {
+        console.log(err);
+        return res.status(500).json({
+          status: false,
+          message: 'Error hashing password',
+          data: undefined,
+        });
+      }
+
+      customer.password = hash;
+      await customer.save();
+
+      await Token.findOneAndDelete({
+        _customerId: decoded.customerId,
+        tokenType: 'resetPassword',
+      });
+
+      res.status(200).json({
+        status: true,
+        message: 'Password reset successful',
+        data: undefined,
+      });
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      status: false,
+      message: 'Error resetting password',
+      data: undefined,
+    });
+  }
+};
 
 
-
-  
-
-export { register, login , logout , authUser, forgetPassword };
+export { register, login , logout , authUser, forgetPassword, resetPasswordcon };
