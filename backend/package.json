@@ -5,6 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "test" : "echo \"There are no test cases\" && exit 0",
     "start": "nodemon index.js"
   },
   "keywords": [],
