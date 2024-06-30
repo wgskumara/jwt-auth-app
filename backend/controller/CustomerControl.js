@@ -1,10 +1,14 @@
 import Customer from "../model/CustomerModel.js";
 import Token from "../model/Token.js";
-import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { auth } from "../middleware/auth.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { resetPassword } from "../utils/emailTemplate.js";
+import crypto from "crypto";
+
+const hashPassword = (password) => {
+	return crypto.createHash("sha256").update(password).digest("hex");
+};
 
 const register = async (req, res) => {
 	try {
@@ -16,10 +20,9 @@ const register = async (req, res) => {
 				message: "Email already exists",
 				data: undefined,
 			});
-			console.log("Request body:", req.body);
 		}
 
-		const hashedPassword = await bcrypt.hash(req.body.password, 10);
+		const hashedPassword = hashPassword(req.body.password);
 		const customer = new Customer({ ...req.body, password: hashedPassword });
 		const savedCustomer = await customer.save();
 
@@ -49,14 +52,8 @@ const login = async (req, res) => {
 			});
 		}
 
-		const result = await new Promise((resolve, reject) => {
-			bcrypt.compare(req.body.password, customer.password, (err, result) => {
-				if (err) reject(err);
-				else resolve(result);
-			});
-		});
-
-		if (result) {
+		const passwordMatch = hashPassword(req.body.password) === customer.password;
+		if (passwordMatch) {
 			const token = jwt.sign(
 				{
 					email: customer.email,
@@ -208,11 +205,7 @@ const resetPasswordcon = async (req, res) => {
 
 	try {
 		const decoded = jwt.verify(token, process.env.JWT_RESET_PW_KEY);
-		const customer = await Token.findOne({
-			_customerId: decoded.customerId,
-			token: token,
-			tokenType: "resetPassword",
-		});
+		const customer = await Customer.findById(decoded.customerId);
 		console.log("customer:", customer);
 
 		if (!customer) {
@@ -223,32 +216,21 @@ const resetPasswordcon = async (req, res) => {
 			});
 		}
 
-		bcrypt.hash(password, 10, async (err, hash) => {
-			if (err) {
-				console.log(err);
-				return res.status(500).json({
-					status: false,
-					message: "Error hashing password",
-					data: undefined,
-				});
-			}
+		customer.password = hashPassword(password);
+		await customer.save();
 
-			customer.password = hash;
-			await customer.save();
+		await Token.findOneAndDelete({
+			_customerId: decoded.customerId,
+			tokenType: "resetPassword",
+		});
 
-			await Token.findOneAndDelete({
-				_customerId: decoded.customerId,
-				tokenType: "resetPassword",
-			});
-
-			res.status(200).json({
-				status: true,
-				message: "Password reset successful",
-				data: undefined,
-			});
+		res.status(200).json({
+			status: true,
+			message: "Password reset successful",
+			data: undefined,
 		});
 	} catch (err) {
-		console.log(err);
+		console.error(err);
 		res.status(500).json({
 			status: false,
 			message: "Error resetting password",
