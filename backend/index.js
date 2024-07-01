@@ -11,7 +11,12 @@ app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors());
-app.use("/", CustomerRoutes);
+app.use("/customers", CustomerRoutes); // Changed to avoid conflict with root route
+
+// Root route to respond with "Hello World"
+app.get("/", (req, res) => {
+	res.send("Hello World");
+});
 
 mongoose
 	.connect(process.env.MONGODB_URL, {
@@ -24,5 +29,5 @@ mongoose
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-	console.log(`Server is up and runnig on : ${PORT} 🚀🚀🚀`);
+	console.log(`Server is up and running on : ${PORT} 🚀🚀🚀`);
 });
