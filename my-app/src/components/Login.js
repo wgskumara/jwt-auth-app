@@ -8,7 +8,8 @@ const Login = () => {
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		try {
-			const response = await axios.post("http://localhost:81/login", {
+			const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:82';
+            const response = await axios.post(`${apiUrl}/login`, {
 				email,
 				password,
 			});
