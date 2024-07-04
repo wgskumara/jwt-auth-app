@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom"; // Import useNavigate from React Router
 
 const Login = () => {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
+	const [error, setError] = useState("");
+	const navigate = useNavigate(); // Initialize useNavigate
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
@@ -15,8 +18,11 @@ const Login = () => {
 			});
 			alert(response.data.message);
 			localStorage.setItem("token", response.data.data.token);
+
+			// Navigate to UserDetails on successful login
+			navigate("/authUser");
 		} catch (error) {
-			alert(error.response.data.message);
+			setError(error.response.data.message);
 		}
 	};
 
@@ -24,6 +30,7 @@ const Login = () => {
 		<div style={styles.container}>
 			<form onSubmit={handleSubmit} style={styles.form}>
 				<h2 style={styles.title}>Login</h2>
+				{error && <div style={styles.error}>{error}</div>}
 				<div style={styles.inputGroup}>
 					<label style={styles.label}>Email:</label>
 					<input
@@ -59,7 +66,7 @@ const styles = {
 		backgroundColor: "#f0f2f5",
 	},
 	form: {
-		padding: "40px",
+		padding: "60px",
 		borderRadius: "10px",
 		boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
 		backgroundColor: "#fff",
@@ -93,6 +100,11 @@ const styles = {
 		color: "#fff",
 		fontWeight: "bold",
 		cursor: "pointer",
+	},
+	error: {
+		color: "red",
+		marginBottom: "10px",
+		textAlign: "center",
 	},
 };
 

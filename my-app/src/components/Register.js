@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Register = () => {
+	const navigate = useNavigate();
 	const [formData, setFormData] = useState({
 		firstname: "",
 		lastname: "",
@@ -23,6 +25,7 @@ const Register = () => {
 			const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:82";
 			const response = await axios.post(`${apiUrl}/register`, formData);
 			alert(response.data.message);
+			navigate("/login");
 		} catch (error) {
 			alert(error.response.data.message);
 		}
