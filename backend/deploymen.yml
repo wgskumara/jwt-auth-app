@@ -23,7 +23,7 @@ kind: Service
 metadata:
   name: backend-service
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   ports:
     - port: 85
       targetPort: 85
