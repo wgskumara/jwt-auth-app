@@ -1,0 +1,122 @@
+pipeline {
+    agent any
+    
+    tools {
+        nodejs 'node21'
+    }
+    
+    environment {
+        SCANNER_HOME = tool 'sonar-scanner'
+    }
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Lachitha/JWT-AUTH-APP.git'
+            }
+        }
+        stage('Install Dependencies') {
+            steps {
+                dir('backend') {
+                    sh "npm install"
+                }
+            }
+        }
+        stage('Unit Test') {
+            steps {
+                dir('backend') {
+                    sh "npm test"
+                }
+            }
+        }
+        stage('Trivy FS Scan') {
+            steps {
+                dir('backend') {
+                    sh "trivy fs --format table -o fs-report.html ."
+                }
+            }
+        }
+        stage('SonarQube') {
+            steps {
+                withSonarQubeEnv('sonar') {
+                    dir('backend') {
+                        sh '$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectKey=Authen -Dsonar.projectName=Authen'
+                    }
+                }
+            }
+        }
+        stage('Docker Build & Tag') {
+            steps {
+                dir('backend') {
+                    script {
+                        withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                            sh "docker build -t lachisenarath576259/authentication1:latest ."
+                        }
+                    }
+                }
+            }
+        }
+        stage('Trivy Image Scan') {
+            steps {
+                sh "trivy image --format table -o image-report.html lachisenarath576259/authentication1:latest"
+            }
+        }
+        stage('Docker Push Image') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                        sh "docker push lachisenarath576259/authentication1:latest"
+                    }
+                }
+            }
+        }
+        stage('Stop and Remove Existing Container') {
+            steps {
+                script {
+                    sh '''
+                        EXISTING_CONTAINER_ID=$(docker ps -q -f "publish=85")
+                        
+                        if [ ! -z "$EXISTING_CONTAINER_ID" ]; then
+                            docker stop $EXISTING_CONTAINER_ID
+                            docker rm $EXISTING_CONTAINER_ID
+                        fi
+                    '''
+                }
+            }
+        }
+        stage('Deploy to dev') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                        sh "docker run -d -p 85:85 lachisenarath576259/authentication1:latest"
+                    }
+                }
+            }
+        }
+        stage('Deploy to Kubernetes') {
+            steps {
+                dir('backend') {
+                    script {
+withKubeCredentials(kubectlCredentials: [[caCertificate: '', clusterName: 'my-EKS-1', contextName: '', credentialsId: 'k8-token', namespace: 'webapps', serverUrl: 'https://2311BF0A95A48DFA68EE45E97C336D1D.gr7.ap-south-1.eks.amazonaws.com']]) {                          
+   sh "kubectl delete pods --all"
+    sh "kubectl apply -f deployment.yml"
+                        }
+                    }
+                }
+            }
+        }
+        
+           stage('Verify K8s Service') {
+            steps {
+             
+                    script {
+withKubeCredentials(kubectlCredentials: [[caCertificate: '', clusterName: 'my-EKS-1', contextName: '', credentialsId: 'k8-token', namespace: 'webapps', serverUrl: 'https://2311BF0A95A48DFA68EE45E97C336D1D.gr7.ap-south-1.eks.amazonaws.com']]) {                          
+    sh "kubectl get svc"
+                        }
+                    }
+                
+            }
+        }
+        
+    }
+}
