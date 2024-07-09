@@ -16,7 +16,7 @@ spec:
         - name: backend
           image: lachisenarath576259/authentication1:latest
           ports:
-            - containerPort: 80
+            - containerPort: 85
 ---
 apiVersion: v1
 kind: Service
@@ -25,7 +25,7 @@ metadata:
 spec:
   type: LoadBalancer
   ports:
-    - port: 80
+    - port: 85
       targetPort: 80
   selector:
     app: backend
