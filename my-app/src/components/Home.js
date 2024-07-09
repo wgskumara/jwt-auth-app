@@ -13,7 +13,7 @@ const Home = () => {
 				backgroundColor: "#f0f0f0",
 			}}>
 			<h1 style={{ fontSize: "2rem", marginBottom: "2rem", color: "#333" }}>
-				Welcome to Our App
+				Welcome to Our Authentication Application
 			</h1>
 			<div style={{ display: "flex", gap: "1rem" }}>
 				<Link to="/login">
