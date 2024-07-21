@@ -1,0 +1,91 @@
+pipeline {
+    agent any
+    
+    tools {
+        nodejs 'node21' //name you configured in tool
+    }
+    
+    environment {
+        SCANNER_HOME = tool 'sonar'   //name you configured in system settinng
+    }
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Lachitha/JWT-AUTH-APP.git'
+            }
+        }
+        stage('Install Dependencies') {
+            steps {
+                dir('my-app') {
+                    sh "npm install"
+                }
+            }
+        }
+   
+        stage('Trivy FS Scan') {
+            steps {
+                dir('my-app') {
+                    sh "trivy fs --format table -o fs-report.html ."
+                }
+            }
+        }
+        stage('SonarQube') {
+            steps {
+                withSonarQubeEnv('sonar') {
+                    dir('my-app') {
+                        sh '$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectKey=Authen -Dsonar.projectName=Authen'
+                    }
+                }
+            }
+        }
+        stage('Docker Build & Tag') {
+            steps {
+                dir('my-app') {
+                    script {
+                        withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                            sh "docker build -t lachisenarath576259/frontendauthentication:latest ."
+                        }
+                    }
+                }
+            }
+        }
+        stage('Trivy Image Scan') {
+            steps {
+                sh "trivy image --format table -o image-report.html lachisenarath576259/frontendauthentication:latest"
+            }
+        }
+        stage('Docker Push Image') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                        sh "docker push lachisenarath576259/frontendauthentication:latest"
+                    }
+                }
+            }
+        }
+        stage('Stop and Remove Existing Container') {
+            steps {
+                script {
+                    sh '''
+                        EXISTING_CONTAINER_ID=$(docker ps -q -f "publish=443")
+                        
+                        if [ ! -z "$EXISTING_CONTAINER_ID" ]; then
+                            docker stop $EXISTING_CONTAINER_ID
+                            docker rm $EXISTING_CONTAINER_ID
+                        fi
+                    '''
+                }
+            }
+        }
+        stage('Deploy to dev') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                        sh "docker run -d -p 443:443 lachisenarath576259/frontendauthentication:latest"
+                    }
+                }
+            }
+        }
+    }
+}
