@@ -1,0 +1,24 @@
+        stage('Deploy to Kubernetes') {
+            steps {
+                dir('backend') {
+                    script {
+withKubeCredentials(kubectlCredentials: [[caCertificate: '', clusterName: 'my-EKS-1', contextName: '', credentialsId: 'k8-token', namespace: 'webapps', serverUrl: 'https://2311BF0A95A48DFA68EE45E97C336D1D.gr7.ap-south-1.eks.amazonaws.com']]) {                          
+   sh "kubectl delete pods --all"
+    sh "kubectl apply -f deployment.yml"
+                        }
+                    }
+                }
+            }
+        }
+        
+           stage('Verify K8s Service') {
+            steps {
+             
+                    script {
+withKubeCredentials(kubectlCredentials: [[caCertificate: '', clusterName: 'my-EKS-1', contextName: '', credentialsId: 'k8-token', namespace: 'webapps', serverUrl: 'https://2311BF0A95A48DFA68EE45E97C336D1D.gr7.ap-south-1.eks.amazonaws.com']]) {                          
+    sh "kubectl get svc"
+                        }
+                    }
+                
+            }
+        }
