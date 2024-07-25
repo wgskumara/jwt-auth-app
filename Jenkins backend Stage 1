@@ -17,21 +17,21 @@ pipeline {
         }
         stage('Install Dependencies') {
             steps {
-                dir('my-app') {
+                dir('backend') {
                     sh "npm install"
                 }
             }
         }
         stage('Unit Test') {
             steps {
-                dir('my-app') {
+                dir('backend') {
                     sh "npm test"
                 }
             }
         }
         stage('Trivy FS Scan') {
             steps {
-                dir('my-app') {
+                dir('backend') {
                     sh "trivy fs --format table -o fs-report.html ."
                 }
             }
@@ -39,7 +39,7 @@ pipeline {
         stage('SonarQube') {
             steps {
                 withSonarQubeEnv('sonar') {
-                    dir('my-app') {
+                    dir('backend') {
                         sh '$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectKey=Authenbackend -Dsonar.projectName=Authenbackend'
                     }
                 }
@@ -47,7 +47,7 @@ pipeline {
         }
         stage('Docker Build & Tag') {
             steps {
-                dir('my-app') {
+                dir('backend') {
                     script {
                         withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
                             sh "docker build -t lachisenarath576259/backendauthentication:latest ."
