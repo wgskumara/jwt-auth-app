@@ -5,6 +5,7 @@ import Login from "./components/Login";
 import ForgotPassword from "./components/ForgotPassword";
 import Authuser from "./components/auth";
 import Home from "./components/Home";
+import Health from "./components/health.html";
 
 function App() {
 	return (
@@ -16,6 +17,7 @@ function App() {
 					<Route path="/login" element={<Login />} /> authUser
 					<Route path="/forgot-password" element={<ForgotPassword />} />
 					<Route path="/authUser" element={<Authuser />} />
+					<Route path="/health" element={<Health />} />
 				</Routes>
 			</div>
 		</Router>
