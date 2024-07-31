@@ -13,6 +13,11 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use("/", CustomerRoutes);
 
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
+
 mongoose
 	.connect(process.env.MONGODB_URL, {
 		useNewUrlParser: true,
