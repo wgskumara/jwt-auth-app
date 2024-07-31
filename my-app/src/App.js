@@ -5,7 +5,7 @@ import Login from "./components/Login";
 import ForgotPassword from "./components/ForgotPassword";
 import Authuser from "./components/auth";
 import Home from "./components/Home";
-import Health from "./components/health.html";
+import Health from "./components/health";
 
 function App() {
 	return (
