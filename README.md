@@ -3,7 +3,7 @@
 This repository contains the configuration for a CI/CD pipeline to deploy a Node.js application using Jenkins, Docker, SonarQube, Aqua Trivy, and Amazon EKS. The pipeline ensures code quality, security scans, and automated deployment to a Kubernetes cluster.
 !NODE 22.1.0
 
-https://youtu.be/svsHU5efHKk
+Demo:- https://youtu.be/svsHU5efHKk
 
 ## Architecture Diagram
 
